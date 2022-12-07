@@ -12,12 +12,22 @@ public class MiniHibernate {
         List<String> fields = ReflactionOperations.getFields(classPath);
         List<String> types =  ReflactionOperations.getTypes(classPath);
 
-        DataBaseOperations.createTable(name, fields, types);
+        Repository.createTable(name, fields, types);
 
     }
 
-//    public static List<Dataset> getAll(String databaseName) throws SQLException {
-//        List<Dataset> data = DataBaseOperations.getAll(databaseName);
-//        return data;
-//    }
+    public static void deleteBykey(String classPath, String column, String key) throws ClassNotFoundException {
+        String name = ReflactionOperations.getName(classPath);
+        Repository.deleteAt(name, column, key);
+    }
+
+    public static void insertInto(String classPath, Object object) throws SQLException, ClassNotFoundException, IllegalAccessException {
+        Repository.insert(classPath, object);
+    }
+
+    public static List<Dataset> getAll(String classPath){
+        List<Dataset> data = Repository.getAll(classPath);
+        return data;
+    }
+
 }

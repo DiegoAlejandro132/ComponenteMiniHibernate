@@ -6,21 +6,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataBaseOperations {
-
-//    public static void createDatabase(String databaseName) throws SQLException {
-//        Connection connection = new ConexaoBanco().conection();
-//        PreparedStatement stmt = null;
-//
-//        try{
-//            stmt = connection.prepareStatement("CREATE DATABASE IF NOT EXISTS ?");
-//            stmt.setString(1, databaseName);
-//            stmt.execute();
-//            stmt.close();
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+public class Repository {
 
     public static void createTable(String tableName, List<String> fields, List<String> types) throws SQLException {
         Connection connection = new ConexaoBanco().conection();
@@ -50,9 +36,7 @@ public class DataBaseOperations {
 
     public static void insert(String classPath, Object object) throws ClassNotFoundException, IllegalAccessException, SQLException {
         Connection connection = new ConexaoBanco().conection();
-        PreparedStatement stmt = null;
 
-        Class classe = Class.forName(classPath);
         List<String> fields = ReflactionOperations.getFields(classPath);
         List<String> types = ReflactionOperations.getTypes(classPath);
         String tableName = ReflactionOperations.getName(classPath).toLowerCase();
@@ -91,7 +75,7 @@ public class DataBaseOperations {
                         if (types.get(index).equals("String")) {
                             insertStatement.append('\'').append(declaredField.get(object)).append('\'').append(", ");
                         } else {
-                            insertStatement.append(declaredField.get(object).toString()).append('\'').append(", ");
+                            insertStatement.append(declaredField.get(object).toString()).append(", ");
                         }
                     }
                 }
@@ -105,7 +89,6 @@ public class DataBaseOperations {
 
     public static List<Dataset> getAll(String classPath){
         Connection connection = new ConexaoBanco().conection();
-
 
         try{
             String tableName = ReflactionOperations.getName(classPath);
