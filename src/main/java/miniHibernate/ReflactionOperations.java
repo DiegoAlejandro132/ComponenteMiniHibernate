@@ -18,6 +18,13 @@ public class ReflactionOperations {
         return fieldsName;
     }
 
+    public static Field[] getDeclaredFields(String classPath) throws ClassNotFoundException {
+        Class classe = Class.forName(classPath);
+
+        Field[] fields = classe.getDeclaredFields();
+        return fields;
+    }
+
     public static String getName(String classPath) throws ClassNotFoundException {
         Class classe = Class.forName(classPath);
         return classe.getSimpleName();

@@ -1,5 +1,7 @@
 package miniHibernate;
 
+
+import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +26,6 @@ public class DataBaseOperations {
         Connection connection = new ConexaoBanco().conection();
 
         List<String> newTypes = changeType(types);
-        newTypes.set(0, "varchar(250)"); //gambiarra pra substituir string por varchar -> ver o q esta errado na função change type
         String datatypes = "";
         int index = 0;
         while (index < fields.size()){
@@ -35,7 +36,7 @@ public class DataBaseOperations {
             }
             index ++;
         }
-        String sql = "CREATE TABLE IF NOT EXISTS " + tableName + "( " + datatypes + ");";
+        String sql = "CREATE TABLE IF NOT EXISTS " + tableName.toLowerCase() + "( " + datatypes + ");";
 
         try {
             connection.createStatement().executeUpdate(sql);
@@ -47,41 +48,107 @@ public class DataBaseOperations {
         }
     }
 
-    public static void insert(String tableName, Object object){
+    public static void insert(String classPath, Object object) throws ClassNotFoundException, IllegalAccessException, SQLException {
         Connection connection = new ConexaoBanco().conection();
         PreparedStatement stmt = null;
 
+        Class classe = Class.forName(classPath);
+        List<String> fields = ReflactionOperations.getFields(classPath);
+        List<String> types = ReflactionOperations.getTypes(classPath);
+        String tableName = ReflactionOperations.getName(classPath).toLowerCase();
+        Field[] declaredFields = ReflactionOperations.getDeclaredFields(classPath);
+
+        StringBuilder insertStatement = new StringBuilder();
+        insertStatement.append("INSERT INTO ").append(tableName).append("( ");
+        int index = 0;
+
+        for(String field : fields){
+            if(index == fields.size() - 1){
+                insertStatement.append(field + " ) VALUES(");
+            }else{
+                insertStatement.append(field + ",");
+            }
+            index++;
+        }
+
+        index = 0;
+        for(Field declaredField : declaredFields){
+            declaredField.setAccessible(true);
+
+            if(index == fields.size() - 1) {
+                if (declaredField.getName().equals(fields.get(index))) {
+                    if (declaredField.get(object) != null) {
+                        if (types.get(index).equals("String")) {
+                            insertStatement.append('\'').append(declaredField.get(object)).append("');");
+                        } else {
+                            insertStatement.append(declaredField.get(object).toString()).append(");");
+                        }
+                    }
+                }
+            }else{
+                if (declaredField.getName().equals(fields.get(index))) {
+                    if (declaredField.get(object) != null) {
+                        if (types.get(index).equals("String")) {
+                            insertStatement.append('\'').append(declaredField.get(object)).append('\'').append(", ");
+                        } else {
+                            insertStatement.append(declaredField.get(object).toString()).append('\'').append(", ");
+                        }
+                    }
+                }
+            }
+            index++;
+        }
+        System.out.println(insertStatement);
+
+        connection.createStatement().execute(insertStatement.toString());
     }
 
-    public static List<Object> getAll(String tableName){
+    public static List<Dataset> getAll(String classPath){
         Connection connection = new ConexaoBanco().conection();
+
+
         try{
+            String tableName = ReflactionOperations.getName(classPath);
+
             String sql = "SELECT * FROM " + tableName;
             ResultSet rs = connection.createStatement().executeQuery(sql);
-            List<Object> rsList = new ArrayList<>();
-            int index = 0;
+
+            List<Dataset> rsList = new ArrayList<>();
+            List<String> fields = ReflactionOperations.getFields(classPath);
+
             while(rs.next()){
-                rsList.set(index, rs.getObject(index));
-                index++;
+                for(String field : fields){
+                    rsList.add(new Dataset(field, rs.getObject(field).toString()));
+                }
             }
             connection.close();
+
+            String rowPrint = "";
+
+            int i = 0;
+            for(Dataset dataset : rsList){
+                rowPrint += dataset.getField() + ": " + dataset.getValue() + " | ";
+                if((i + 1) % fields.size() == 0){
+                    System.out.println(rowPrint);
+                    System.out.println("------");
+                    rowPrint = "";
+                }
+                i++;
+            }
+
             return rsList;
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void deleteAt(String tableName, String column, String index){
+    public static void deleteAt(String tableName, String column, String key){
         Connection connection = new ConexaoBanco().conection();
         PreparedStatement stmt = null;
 
         try{
-            stmt = connection.prepareStatement("DELETE FROM ? WHERE ? = ?");
-            stmt.setString(1, tableName);
-            stmt.setString(2, column);
-            stmt.setString(3, index);
-            stmt.execute();
-            stmt.close();
+            String sql = "DELETE FROM " + tableName + " WHERE " + column + " = '" + key + "';";
+            connection.createStatement().executeUpdate(sql);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -91,14 +158,12 @@ public class DataBaseOperations {
     private static List<String> changeType(List<String> types){
         List<String> newTypes = new ArrayList<>();
         for(String type : types){
-            if (type == "String"){
+            if (type.equals("String")){
                 String string = "varchar(255)";
                 newTypes.add(string);
-                System.out.println("entrou");
             }else{
                 newTypes.add(type);
             }
-            System.out.println(type);
         }
         return newTypes;
     }

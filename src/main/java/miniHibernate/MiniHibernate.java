@@ -1,6 +1,5 @@
 package miniHibernate;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -17,12 +16,8 @@ public class MiniHibernate {
 
     }
 
-    public static Object getAll(String databaseName) throws SQLException {
-        List<Object> data = DataBaseOperations.getAll(databaseName);
-        System.out.println(data);
-        return data;
-    }
-
-
-
+//    public static List<Dataset> getAll(String databaseName) throws SQLException {
+//        List<Dataset> data = DataBaseOperations.getAll(databaseName);
+//        return data;
+//    }
 }
