@@ -88,51 +88,64 @@ public class Repository {
     }
 
     public static List<Dataset> getAll(String classPath){
-        Connection connection = new ConexaoBanco().conection();
-
         try{
             String tableName = ReflactionOperations.getName(classPath);
-
             String sql = "SELECT * FROM " + tableName;
-            ResultSet rs = connection.createStatement().executeQuery(sql);
-
-            List<Dataset> rsList = new ArrayList<>();
-            List<String> fields = ReflactionOperations.getFields(classPath);
-
-            while(rs.next()){
-                for(String field : fields){
-                    rsList.add(new Dataset(field, rs.getObject(field).toString()));
-                }
-            }
-            connection.close();
-
-            String rowPrint = "";
-
-            int i = 0;
-            for(Dataset dataset : rsList){
-                rowPrint += dataset.getField() + ": " + dataset.getValue() + " | ";
-                if((i + 1) % fields.size() == 0){
-                    System.out.println(rowPrint);
-                    System.out.println("------");
-                    rowPrint = "";
-                }
-                i++;
-            }
-
-            return rsList;
-        } catch (SQLException | ClassNotFoundException e) {
+            return(fetch(classPath, sql));
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
+    private static List<Dataset> fetch(String classPath, String sql) throws SQLException, ClassNotFoundException {
+        Connection connection = new ConexaoBanco().conection();
+
+        ResultSet rs = connection.createStatement().executeQuery(sql);
+
+        List<Dataset> rsList = new ArrayList<>();
+        List<String> fields = ReflactionOperations.getFields(classPath);
+
+        while(rs.next()){
+            for(String field : fields){
+                rsList.add(new Dataset(field, rs.getObject(field).toString()));
+            }
+        }
+        connection.close();
+
+        String rowPrint = "";
+
+        int i = 0;
+        for(Dataset dataset : rsList){
+            rowPrint += dataset.getField() + ": " + dataset.getValue() + " | ";
+            if((i + 1) % fields.size() == 0){
+                System.out.println(rowPrint);
+                System.out.println("------");
+                rowPrint = "";
+            }
+            i++;
+        }
+
+        return rsList;
+    }
+
     public static void deleteAt(String tableName, String column, String key){
         Connection connection = new ConexaoBanco().conection();
-        PreparedStatement stmt = null;
 
         try{
             String sql = "DELETE FROM " + tableName + " WHERE " + column + " = '" + key + "';";
             connection.createStatement().executeUpdate(sql);
         } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static List<Dataset> findByKey(String classPath, String column, String key){
+        try{
+            String tableName = ReflactionOperations.getName(classPath);
+            String sql = "SELECT * FROM " + tableName + " WHERE " + column + " = '" + key + "';";
+            System.out.println(sql);
+            return(fetch(classPath, sql));
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException(e);
         }
     }

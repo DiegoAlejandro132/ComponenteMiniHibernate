@@ -21,6 +21,10 @@ public class MiniHibernate {
         Repository.deleteAt(name, column, key);
     }
 
+     public static void findByKey(String classPath, String column, String key) throws ClassNotFoundException {
+        Repository.findByKey(classPath, column, key);
+    }
+
     public static void insertInto(String classPath, Object object) throws SQLException, ClassNotFoundException, IllegalAccessException {
         Repository.insert(classPath, object);
     }
